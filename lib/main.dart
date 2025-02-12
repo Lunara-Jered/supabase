@@ -81,17 +81,24 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onItemTapped;
 
   const BottomNavBar({super.key, required this.currentIndex, required this.onItemTapped});
 
   @override
+  _BottomNavBarState createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> {
+  String type = 'video';  // Exemple de variable pour gérer l'état
+
+  @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
+      currentIndex: widget.currentIndex,
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
       items: const [
@@ -100,9 +107,15 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.chat), label: "FAQ"),
         BottomNavigationBarItem(icon: Icon(Icons.picture_as_pdf), label: "Lois Électorales"),
       ],
-      onTap: onItemTapped,
+      onTap: (index) {
+        widget.onItemTapped(index);
+        setState(() {
+          type = 'pdf';  // Exemple de changement de l'état en fonction de l'index
+        });
+      },
     );
   }
+}
 
 class VideoUploadPage extends StatefulWidget {
   @override
