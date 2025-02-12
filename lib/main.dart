@@ -7,8 +7,7 @@ import 'package:path/path.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 
-
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await Supabase.initialize(
@@ -22,7 +21,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -30,7 +28,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -43,7 +40,6 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    AddFeedItemScreen
     VideoUploadPage(),
     PDFUploaderScreen(),
     StoryPage(),
@@ -236,7 +232,6 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
   }
 }
 
-  
 class PDFUploaderScreen extends StatefulWidget {
   @override
   _PDFUploaderScreenState createState() => _PDFUploaderScreenState();
@@ -270,7 +265,7 @@ class _PDFUploaderScreenState extends State<PDFUploaderScreen> {
       final response = await Supabase.instance.client
           .storage
           .from('pdf_files')  // Assurez-vous que le nom du bucket est correct
-          .upload(fileName!, fileBytes, upsert: true);
+          .upload(fileName, fileBytes, upsert: true);
 
       if (response.error == null) {
         setState(() {
@@ -290,26 +285,18 @@ class _PDFUploaderScreenState extends State<PDFUploaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Uploader un PDF'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: Text("Téléchargement PDF")),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _isUploading ? null : _uploadPDF,
-              child: _isUploading
-                  ? const CircularProgressIndicator()
-                  : const Text('Sélectionner un fichier PDF'),
+          children: [
+            if (_isUploading) CircularProgressIndicator(),
+            if (!_isUploading) ElevatedButton(
+              onPressed: _uploadPDF,
+              child: Text("Choisir et Télécharger un PDF"),
             ),
             SizedBox(height: 20),
-            Text(
-              _uploadStatus,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text(_uploadStatus),
           ],
         ),
       ),
@@ -317,137 +304,45 @@ class _PDFUploaderScreenState extends State<PDFUploaderScreen> {
   }
 }
 
-final supabase = Supabase.instance.client;
-
-class StoryPage extends StatefulWidget {
-  const StoryPage({super.key});
-
-  @override
-  _StoryPageState createState() => _StoryPageState();
-}
-
-class _StoryPageState extends State<StoryPage> {
-  List<Map<String, dynamic>> stories = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchStories();
-  }
-
-  Future<void> fetchStories() async {
-    final response = await supabase.from('stories').select();
-    setState(() {
-      stories = List<Map<String, dynamic>>.from(response);
-    });
-  }
-
-  Future<void> uploadStory() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    final video = await FilePicker.platform.pickFiles(type: FileType.video);
-
-    if (image == null || video == null) return;
-
-    // 🔥 Stockage de l'image
-    final imagePath = 'stories/${image.name}';
-    await supabase.storage.from('story-images').upload(imagePath, image.path);
-
-    // 🔥 Stockage de la vidéo
-    final videoPath = 'stories/${video.files.first.name}';
-    await supabase.storage.from('story-videos').upload(videoPath, video.files.first.path!);
-
-    final imageUrl = supabase.storage.from('story-images').getPublicUrl(imagePath);
-    final videoUrl = supabase.storage.from('story-videos').getPublicUrl(videoPath);
-
-    await supabase.from('stories').insert({
-      'name': "Utilisateur",
-      'image_url': imageUrl,
-      'video_url': videoUrl,
-    });
-
-    fetchStories();
-  }
+class StorySection extends StatelessWidget {
+  const StorySection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Stories")),
-      floatingActionButton: FloatingActionButton(
-        onPressed: uploadStory,
-        child: const Icon(Icons.add),
+    return Container(
+      height: 200,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: <Widget>[
+          StoryCard(imageUrl: 'assets/story1.jpg', title: 'Story 1'),
+          StoryCard(imageUrl: 'assets/story2.jpg', title: 'Story 2'),
+          StoryCard(imageUrl: 'assets/story3.jpg', title: 'Story 3'),
+        ],
       ),
-      body: stories.isEmpty
-          ? const Center(child: Text("Aucune story disponible"))
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: stories.length,
-              itemBuilder: (context, index) {
-                var story = stories[index];
-                return GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => StoryPopup(videoUrl: story['video_url']),
-                    );
-                  },
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage: NetworkImage(story['image_url']),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(story['name'], style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                );
-              },
-            ),
     );
   }
 }
 
-// 🎥 Popup pour voir la story
-class StoryPopup extends StatefulWidget {
-  final String videoUrl;
-  const StoryPopup({super.key, required this.videoUrl});
+class StoryCard extends StatelessWidget {
+  final String imageUrl;
+  final String title;
 
-  @override
-  _StoryPopupState createState() => _StoryPopupState();
-}
-
-class _StoryPopupState extends State<StoryPopup> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.network(widget.videoUrl)
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const StoryCard({super.key, required this.imageUrl, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      content: _controller.value.isInitialized
-          ? AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
-            )
-          : const CircularProgressIndicator(),
+    return Card(
+      elevation: 5,
+      child: Column(
+        children: [
+          Image.asset(imageUrl, width: 100, height: 100),
+          Text(title),
+        ],
+      ),
     );
   }
 }
+
 class AddFeedItemScreen extends StatefulWidget {
   @override
   _AddFeedItemScreenState createState() => _AddFeedItemScreenState();
