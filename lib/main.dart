@@ -6,6 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:video_picker/video_picker.dart';
+import 'package:video_player/video_player.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
