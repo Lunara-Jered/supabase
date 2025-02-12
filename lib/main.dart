@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:video_picker/video_picker.dart';
 import 'package:video_player/video_player.dart';
 
 
@@ -140,8 +139,8 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
   }
 
   Future<void> _pickVideo() async {
-    final picker = VideoPicker();
-    final pickedFile = await picker.pickVideo(source: VideoSource.gallery);
+    final picker = ImagePicker();  // Use ImagePicker for both images and videos
+    final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
     setState(() {
       if (pickedFile != null) {
         _selectedVideo = File(pickedFile.path);
