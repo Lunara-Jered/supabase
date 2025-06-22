@@ -41,7 +41,8 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.3.5
   video_player: ^2.9.2
-  flutter_rtmp_publisher: ^1.0.0           
+  flutter_webrtc: ^0.9.29  # Pour le streaming peer-to-peer
+  socket_io_client: ^2.0.0 # Pour communiquer avec le serveur (optionnel)
   flutter_vlc_player: ^6.0.0
 
 dev_dependencies:
