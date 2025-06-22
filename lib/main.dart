@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_rtmp_publisher/flutter_rtmp_publisher.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class BroadcastScreen extends StatefulWidget {
   @override
@@ -7,37 +6,41 @@ class BroadcastScreen extends StatefulWidget {
 }
 
 class _BroadcastScreenState extends State<BroadcastScreen> {
-  final RTMPPublisher _publisher = RTMPPublisher();
-  bool _isStreaming = false;
+  final _localRenderer = RTCVideoRenderer();
+  MediaStream? _localStream;
+  RTCPeerConnection? _peerConnection;
 
-  Future<void> _startStreaming() async {
-    await _publisher.startStream(
-      rtmpUrl: "rtmp://VOTRE_IP/live/streamkey", // Remplacez par votre URL
-    );
-    setState(() => _isStreaming = true);
+  @override
+  void initState() {
+    super.initState();
+    _initWebRTC();
   }
 
-  Future<void> _stopStreaming() async {
-    await _publisher.stopStream();
-    setState(() => _isStreaming = false);
+  Future<void> _initWebRTC() async {
+    await _localRenderer.initialize();
+    _localStream = await navigator.mediaDevices.getUserMedia({
+      'audio': true,
+      'video': {'facingMode': 'user'},
+    });
+    _localRenderer.srcObject = _localStream;
+
+    // Configurez le serveur WebRTC ici (ex: mediasoup ou un serveur public)
+    _peerConnection = await _createPeerConnection();
+  }
+
+  Future<RTCPeerConnection> _createPeerConnection() async {
+    // Remplacez par la config de votre serveur WebRTC
+    return await createPeerConnection({
+      'iceServers': [
+        {'urls': 'stun:stun.l.google.com:19302'}, // STUN gratuit de Google
+      ],
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Émetteur Live")),
-      body: Center(
-        child: Column(
-          children: [
-            if (_isStreaming)
-              RTMPCameraPreview(_publisher),
-            ElevatedButton(
-              onPressed: _isStreaming ? _stopStreaming : _startStreaming,
-              child: Text(_isStreaming ? "Arrêter" : "Commencer le Live"),
-            ),
-          ],
-        ),
-      ),
+      body: RTCVideoView(_localRenderer),
     );
   }
 }
