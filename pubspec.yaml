@@ -41,6 +41,8 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.3.5
   video_player: ^2.9.2
+  flutter_rtmp_publisher: ^1.0.0           
+  flutter_vlc_player: ^6.0.0
 
 dev_dependencies:
   flutter_test:
